@@ -1,5 +1,6 @@
 langchain==1.2.0
 langchain_core==1.2.1
 langchain_ollama==1.0.1
+openai>=1.0.0
 python-dotenv>=1.0.0
 longport>=1.0.0

@@ -55,6 +55,13 @@ class FetchAgent:
             # 数据验证
             if not stock_data:
                 raise ValueError("未能获取任何股票数据")
+
+            # 标记缺失的股票（API 可能返回子集，例如代码无效/暂不可交易）
+            requested_set = set(symbols)
+            returned_set = set(stock_data.keys())
+            missing = [s for s in symbols if s in requested_set and s not in returned_set]
+            if missing:
+                print(f"⚠️  [FetchAgent] 有 {len(missing)} 只股票未返回行情数据: {', '.join(missing)}")
             
             print(f"✓ [FetchAgent] 成功获取 {len(stock_data)} 只股票的数据")
             
@@ -62,7 +69,9 @@ class FetchAgent:
                 "status": "success",
                 "data": stock_data,
                 "timestamp": datetime.now().isoformat(),
-                "count": len(stock_data)
+                "count": len(stock_data),
+                "requested": symbols,
+                "missing": missing
             }
             
         except Exception as e:

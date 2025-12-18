@@ -51,10 +51,23 @@ class StockAnalysisController:
         Returns:
             配置字典
         """
+        llm_provider = (os.getenv("LLM_PROVIDER", "ollama") or "ollama").strip().lower()
+        if llm_provider == "ark":
+            llm_model = os.getenv("ARK_MODEL", "deepseek-v3-2-251201")
+            llm_base_url = os.getenv("ARK_BASE_URL", "https://ark.cn-beijing.volces.com/api/v3")
+        elif llm_provider == "one":
+            llm_model = os.getenv("ONE_MODEL", "gpt-5.1")
+            llm_base_url = os.getenv("ONE_BASE_URL", "https://lboneapi.longbridge-inc.com")
+        else:
+            llm_provider = "ollama"
+            llm_model = os.getenv("OLLAMA_MODEL", "deepseek-r1:8b")
+            llm_base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
         return {
             "stock_list": os.getenv("STOCK_LIST", "NVDA.US,AAPL.US"),
-            "ollama_model": os.getenv("OLLAMA_MODEL", "deepseek-r1:8b"),
-            "ollama_base_url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            "llm_provider": llm_provider,
+            "llm_model": llm_model,
+            "llm_base_url": llm_base_url,
             "output_dir": os.getenv("OUTPUT_DIR", "report"),
             "strategy_path": "strategies/rating.md",
         }
@@ -86,8 +99,9 @@ class StockAnalysisController:
             print("[Controller] 初始化 Analyse Agent...")
             self.analyse_agent = AnalyseAgent(
                 strategy_path=self.config["strategy_path"],
-                model=self.config["ollama_model"],
-                base_url=self.config["ollama_base_url"],
+                model=self.config["llm_model"],
+                base_url=self.config["llm_base_url"],
+                provider=self.config["llm_provider"],
                 output_dir=self.config["output_dir"]
             )
             
@@ -169,7 +183,8 @@ class StockAnalysisController:
             analyse_result = self.analyse_agent.execute(
                 formatted_data=formatted_data,
                 stock_symbols=stock_symbols,
-                raw_data=fetch_result
+                raw_data=fetch_result,
+                execution_id=execution_id
             )
             result["stages"]["analyse"] = analyse_result
             
@@ -213,8 +228,17 @@ class StockAnalysisController:
             print("⚠️  [Controller] 未配置股票列表")
             return []
         
-        stocks = [s.strip() for s in stock_list_str.split(",") if s.strip()]
-        return stocks
+        # 去重且保序：避免用户配置里重复股票导致后续统计/报告出现重复
+        raw = [s.strip() for s in stock_list_str.split(",") if s.strip()]
+        seen = set()
+        unique_stocks: List[str] = []
+        for s in raw:
+            if s not in seen:
+                seen.add(s)
+                unique_stocks.append(s)
+        if len(unique_stocks) != len(raw):
+            print(f"⚠️  [Controller] 检测到重复股票代码，已自动去重: 原始{len(raw)} -> 去重后{len(unique_stocks)}")
+        return unique_stocks
     
     def _print_success_summary(self, result: Dict[str, Any]):
         """

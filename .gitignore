@@ -39,8 +39,8 @@ env/
 .env.*.local
 
 # Reports
-report/*.md
-!report/README.md
+report/*/*.md
+report/README.md
 
 # Logs
 *.log
