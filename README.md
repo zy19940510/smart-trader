@@ -1,5 +1,7 @@
 # 📊 股票智能分析系统 v2.0
 
+[English](README_EN.md) | 简体中文
+
 基于 Longbridge OpenAPI、Ollama AI 和 LangChain 的股票智能分析系统，提供多维度量化评级和深度分析。
 
 > 🆕 **v2.0 架构升级**: 采用 Agent-Based Architecture，模块化设计，易于扩展！
@@ -92,13 +94,13 @@ ollama pull deepseek-r1:8b
 ### 6. 运行分析
 
 ```bash
-python main.py
+python3 main.py
 ```
 
 或者:
 
 ```bash
-python app.py
+python3 app.py
 ```
 
 ### 7. 查看报告
